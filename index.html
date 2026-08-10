@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ClearVoice AI - Studio Pro</title>
+  <title>ClearVoice Studio Pro</title>
   <style>
     :root {
       --bg: #030712;
@@ -15,148 +15,41 @@
       --text: #f3f4f6;
       --muted: #9ca3af;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 420px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    h1 {
-      font-size: 18px;
-      font-weight: 900;
-      text-align: center;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .status-box {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    /* Tabs / Option Boxes */
-    .action-grid {
-      display: flex;
-      gap: 10px;
-    }
-
-    .upload-box {
-      flex: 1;
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 16px 10px;
-      text-align: center;
-      cursor: pointer;
-      background: rgba(255, 255, 255, 0.01);
-      transition: border-color 0.2s;
-    }
-
-    .upload-box:hover {
-      border-color: var(--primary);
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .btn {
-      width: 100%;
-      background: linear-gradient(135deg, var(--primary), #2563eb);
-      border: none;
-      color: #fff;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-      transition: transform 0.1s;
-    }
-
-    .btn:active { transform: scale(0.97); }
-
-    .btn-record {
-      background: linear-gradient(135deg, var(--danger), #dc2626);
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-    }
-
-    .btn-download {
-      background: linear-gradient(135deg, var(--accent), #059669);
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-    }
-
-    audio {
-      width: 100%;
-      margin-top: 6px;
-      border-radius: 8px;
-    }
-
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+    .container { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px; }
+    h1 { font-size: 18px; font-weight: 900; text-align: center; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .status-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; font-size: 13px; color: var(--muted); font-weight: 600; }
+    .action-grid { display: flex; gap: 10px; }
+    .upload-box { flex: 1; border: 2px dashed var(--border); border-radius: 12px; padding: 16px 10px; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.01); }
+    input[type="file"] { display: none; }
+    .btn { width: 100%; background: linear-gradient(135deg, var(--primary), #2563eb); border: none; color: #fff; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+    .btn-record { background: linear-gradient(135deg, var(--danger), #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+    .btn-download { background: linear-gradient(135deg, var(--accent), #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+    audio { width: 100%; margin-top: 6px; border-radius: 8px; }
+    .section-title { font-size: 12px; font-weight: 700; color: var(--muted); }
   </style>
 </head>
 <body>
-
   <div class="container">
-    <h1>🎙️ ClearVoice AI Studio</h1>
-    <div class="status-box" id="statusText">Choose file or start recording</div>
+    <h1>🎙️ ClearVoice Studio Pro</h1>
+    <div class="status-box" id="statusText">Ready. Choose file or record.</div>
 
     <div class="action-grid">
-      <!-- File Upload Option -->
       <label class="upload-box">
         <div style="font-size: 22px; margin-bottom: 4px;">📂</div>
         <span style="font-size: 12px; font-weight: 700;">Upload Audio</span>
         <input type="file" id="audioFile" accept="audio/*" onchange="handleFileUpload(event)">
       </label>
-
-      <!-- Record Button Option -->
       <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()" style="flex: 1; border-radius: 12px; font-size: 12px;">
         🔴 Live Record
       </button>
     </div>
 
-    <!-- Output Section -->
-    <div id="outputSection" style="display:none; display: flex; flex-direction: column; gap: 8px;">
-      <span class="section-title">Enhanced Crystal Clear Output:</span>
+    <div id="outputSection" style="display:none; flex-direction: column; gap: 8px;">
+      <span class="section-title">Processed Output:</span>
       <audio id="audioOutput" controls></audio>
-      <a id="downloadLink" style="display:block;"><button class="btn btn-download">DOWNLOAD CLEAN AUDIO 📥</button></a>
+      <a id="downloadLink" style="display:block;"><button class="btn btn-download">DOWNLOAD AUDIO 📥</button></a>
     </div>
   </div>
 
@@ -171,58 +64,54 @@
     const audioOutput = document.getElementById('audioOutput');
     const downloadLink = document.getElementById('downloadLink');
 
-    // Handle Uploaded File
     function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
-
-      statusText.textContent = `Processing file: ${file.name}`;
+      statusText.textContent = `Loaded: ${file.name}`;
       const audioUrl = URL.createObjectURL(file);
-
       audioOutput.src = audioUrl;
-      downloadLink.href = audioUrl;
-      downloadLink.download = "clean_" + file.name;
-
+      audioOutput.load();
       outputSection.style.display = "flex";
-      statusText.textContent = "Audio loaded successfully!";
     }
 
-    // Handle Live Recording
     async function toggleRecording() {
       if (!isRecording) {
         try {
+          // Browser ki built-in hardware noise suppression aur echo cancellation request karna
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: { noiseSuppression: true, echoCancellation: true, autoGainControl: true } 
+            audio: { 
+              echoCancellation: true, 
+              noiseSuppression: true, 
+              autoGainControl: true 
+            } 
           });
           
-          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
           audioChunks = [];
 
-          mediaRecorder.ondataavailable = event => {
-            if (event.data.size > 0) audioChunks.push(event.data);
+          mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) audioChunks.push(e.data);
           };
 
           mediaRecorder.onstop = () => {
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const audioUrl = URL.createObjectURL(audioBlob);
-            
             audioOutput.src = audioUrl;
+            audioOutput.load();
             downloadLink.href = audioUrl;
-            downloadLink.download = "clear_voice_recording.webm";
-            
+            downloadLink.download = "studio_voice.webm";
             outputSection.style.display = "flex";
-            statusText.textContent = "Recording processed successfully!";
+            statusText.textContent = "Recording complete & filtered!";
           };
 
           mediaRecorder.start();
           isRecording = true;
           recordBtn.textContent = "⏹️ Stop";
           recordBtn.style.background = "#374151";
-          statusText.textContent = "Recording... Speak now!";
+          statusText.textContent = "Recording with noise suppression...";
           outputSection.style.display = "none";
-
         } catch (err) {
-          alert("Microphone permission denied.");
+          alert("Microphone permission denied or not supported.");
           statusText.textContent = "Mic error.";
         }
       } else {
@@ -235,4 +124,3 @@
   </script>
 </body>
 </html>
-
