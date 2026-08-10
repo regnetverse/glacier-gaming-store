@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ClearVoice Studio Pro</title>
+  <title>ClearVoice AI Pro</title>
   <style>
     :root {
       --bg: #030712;
@@ -32,14 +32,14 @@
 </head>
 <body>
   <div class="container">
-    <h1>🎙️ ClearVoice Studio Pro</h1>
-    <div class="status-box" id="statusText">Ready. Choose file or record.</div>
+    <h1>🎙️ ClearVoice AI Pro</h1>
+    <div class="status-box" id="statusText">Upload file or record to clean noise</div>
 
     <div class="action-grid">
       <label class="upload-box">
         <div style="font-size: 22px; margin-bottom: 4px;">📂</div>
         <span style="font-size: 12px; font-weight: 700;">Upload Audio</span>
-        <input type="file" id="audioFile" accept="audio/*" onchange="handleFileUpload(event)">
+        <input type="file" id="audioFile" accept="audio/*" onchange="processUploadedFile(event)">
       </label>
       <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()" style="flex: 1; border-radius: 12px; font-size: 12px;">
         🔴 Live Record
@@ -47,9 +47,9 @@
     </div>
 
     <div id="outputSection" style="display:none; flex-direction: column; gap: 8px;">
-      <span class="section-title">Processed Output:</span>
+      <span class="section-title">Noise-Filtered Output:</span>
       <audio id="audioOutput" controls></audio>
-      <a id="downloadLink" style="display:block;"><button class="btn btn-download">DOWNLOAD AUDIO 📥</button></a>
+      <a id="downloadLink" style="display:block;"><button class="btn btn-download">DOWNLOAD CLEAN AUDIO 📥</button></a>
     </div>
   </div>
 
@@ -64,54 +64,131 @@
     const audioOutput = document.getElementById('audioOutput');
     const downloadLink = document.getElementById('downloadLink');
 
-    function handleFileUpload(event) {
+    // Audio Buffer ko Filter karne ka function (Web Audio API)
+    async function applyNoiseFilter(arrayBuffer) {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+      const offlineCtx = new OfflineAudioContext(
+        decodedBuffer.numberOfChannels,
+        decodedBuffer.length,
+        decodedBuffer.sampleRate
+      );
+
+      const source = offlineCtx.createBufferSource();
+      source.buffer = decodedBuffer;
+
+      // 1. High-Pass Filter: Low frequencies (fan, rumble, hawa ki awaz) ko cut karega (< 120Hz)
+      const highPass = offlineCtx.createBiquadFilter();
+      highPass.type = 'highpass';
+      highPass.frequency.value = 120;
+
+      // 2. Low-Pass Filter: High frequencies (hiss, static noise) ko cut karega (> 6500Hz)
+      const lowPass = offlineCtx.createBiquadFilter();
+      lowPass.type = 'lowpass';
+      lowPass.frequency.value = 6500;
+
+      // Connect nodes
+      source.connect(highPass);
+      highPass.connect(lowPass);
+      lowPass.connect(offlineCtx.destination);
+
+      source.start(0);
+      const renderedBuffer = await offlineCtx.startRendering();
+      return bufferToWavBlob(renderedBuffer);
+    }
+
+    // AudioBuffer ko WAV Blob me convert karna
+    function bufferToWavBlob(abuffer) {
+      const numOfChan = abuffer.numberOfChannels;
+      const length = abuffer.length * numOfChan * 2 + 44;
+      const buffer = new ArrayBuffer(length);
+      const view = new DataView(buffer);
+      const channels = [];
+      let sample, offset = 0, pos = 0;
+
+      function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+      function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+      setUint32(0x46464952); // "RIFF"
+      setUint32(length - 8);
+      setUint32(0x45564157); // "WAVE"
+      setUint32(0x20746d66); // "fmt " chunk
+      setUint32(16);
+      setUint16(1);          // PCM
+      setUint16(numOfChan);
+      setUint32(abuffer.sampleRate);
+      setUint32(abuffer.sampleRate * 2 * numOfChan);
+      setUint16(numOfChan * 2);
+      setUint16(16);
+      setUint32(0x61746164); // "data"
+      setUint32(length - pos - 4);
+
+      for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
+
+      while (pos < abuffer.length) {
+        for (let i = 0; i < numOfChan; i++) {
+          sample = Math.max(-1, Math.min(1, channels[i][pos]));
+          sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+          view.setInt16(pos + 44, sample, true); // offset fix
+          offset += 2;
+        }
+        pos++;
+      }
+      return new Blob([view], { type: 'audio/wav' });
+    }
+
+    async function processUploadedFile(event) {
       const file = event.target.files[0];
       if (!file) return;
-      statusText.textContent = `Loaded: ${file.name}`;
-      const audioUrl = URL.createObjectURL(file);
+
+      statusText.textContent = "Filtering background noise...";
+      const arrayBuffer = await file.arrayBuffer();
+      
+      const cleanBlob = await applyNoiseFilter(arrayBuffer);
+      const audioUrl = URL.createObjectURL(cleanBlob);
+
       audioOutput.src = audioUrl;
-      audioOutput.load();
+      downloadLink.href = audioUrl;
+      downloadLink.download = "clean_voice.wav";
+
       outputSection.style.display = "flex";
+      statusText.textContent = "Noise removed successfully!";
     }
 
     async function toggleRecording() {
       if (!isRecording) {
         try {
-          // Browser ki built-in hardware noise suppression aur echo cancellation request karna
-          const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: { 
-              echoCancellation: true, 
-              noiseSuppression: true, 
-              autoGainControl: true 
-            } 
-          });
-          
-          mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: { noiseSuppression: true, echoCancellation: true } });
+          mediaRecorder = new MediaRecorder(stream);
           audioChunks = [];
 
-          mediaRecorder.ondataavailable = e => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-          };
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
 
-          mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const audioUrl = URL.createObjectURL(audioBlob);
+          mediaRecorder.onstop = async () => {
+            statusText.textContent = "Processing recorded audio...";
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const arrayBuffer = await blob.arrayBuffer();
+            
+            const cleanBlob = await applyNoiseFilter(arrayBuffer);
+            const audioUrl = URL.createObjectURL(cleanBlob);
+
             audioOutput.src = audioUrl;
-            audioOutput.load();
             downloadLink.href = audioUrl;
-            downloadLink.download = "studio_voice.webm";
+            downloadLink.download = "clean_recording.wav";
+
             outputSection.style.display = "flex";
-            statusText.textContent = "Recording complete & filtered!";
+            statusText.textContent = "Recording cleaned successfully!";
           };
 
           mediaRecorder.start();
           isRecording = true;
-          recordBtn.textContent = "⏹️ Stop";
+          recordBtn.textContent = "⏹️ Stop & Clean";
           recordBtn.style.background = "#374151";
-          statusText.textContent = "Recording with noise suppression...";
+          statusText.textContent = "Recording in progress...";
           outputSection.style.display = "none";
         } catch (err) {
-          alert("Microphone permission denied or not supported.");
+          alert("Mic permission denied.");
           statusText.textContent = "Mic error.";
         }
       } else {
@@ -124,3 +201,4 @@
   </script>
 </body>
 </html>
+
