@@ -2,203 +2,114 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ClearVoice AI Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto Caption Generator</title>
   <style>
-    :root {
-      --bg: #030712;
-      --panel: #0d1117;
-      --border: rgba(255, 255, 255, 0.08);
-      --primary: #3b82f6;
-      --accent: #10b981;
-      --danger: #ef4444;
-      --text: #f3f4f6;
-      --muted: #9ca3af;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
-    .container { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; gap: 16px; }
-    h1 { font-size: 18px; font-weight: 900; text-align: center; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .status-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; font-size: 13px; color: var(--muted); font-weight: 600; }
-    .action-grid { display: flex; gap: 10px; }
-    .upload-box { flex: 1; border: 2px dashed var(--border); border-radius: 12px; padding: 16px 10px; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.01); }
-    input[type="file"] { display: none; }
-    .btn { width: 100%; background: linear-gradient(135deg, var(--primary), #2563eb); border: none; color: #fff; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
-    .btn-record { background: linear-gradient(135deg, var(--danger), #dc2626); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-    .btn-download { background: linear-gradient(135deg, var(--accent), #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
-    audio { width: 100%; margin-top: 6px; border-radius: 8px; }
-    .section-title { font-size: 12px; font-weight: 700; color: var(--muted); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .card { background: #1e293b; padding: 2rem; border-radius: 1rem; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+    h1 { font-size: 1.4rem; margin-bottom: 1.2rem; color: #38bdf8; }
+    input[type="text"], input[type="file"] { width: 100%; padding: 0.8rem; margin-bottom: 1rem; border-radius: 0.5rem; border: 1px solid #334155; background: #0f172a; color: white; }
+    .submit-btn { width: 100%; padding: 0.8rem; background: #10b981; border: none; color: white; border-radius: 0.5rem; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .submit-btn:disabled { background: #475569; cursor: not-allowed; }
+    #status { margin-top: 1.2rem; font-size: 0.85rem; color: #94a3b8; line-height: 1.4; word-break: break-all; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎙️ ClearVoice AI Pro</h1>
-    <div class="status-box" id="statusText">Upload file or record to clean noise</div>
 
-    <div class="action-grid">
-      <label class="upload-box">
-        <div style="font-size: 22px; margin-bottom: 4px;">📂</div>
-        <span style="font-size: 12px; font-weight: 700;">Upload Audio</span>
-        <input type="file" id="audioFile" accept="audio/*" onchange="processUploadedFile(event)">
-      </label>
-      <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()" style="flex: 1; border-radius: 12px; font-size: 12px;">
-        🔴 Live Record
-      </button>
-    </div>
+<div class="card">
+  <h1>⚡ Auto Caption Generator</h1>
+  
+  <input type="text" id="apiKey" placeholder="AssemblyAI API Key Paste Karo" />
+  <input type="file" id="fileInput" accept="video/*,audio/*" />
 
-    <div id="outputSection" style="display:none; flex-direction: column; gap: 8px;">
-      <span class="section-title">Noise-Filtered Output:</span>
-      <audio id="audioOutput" controls></audio>
-      <a id="downloadLink" style="display:block;"><button class="btn btn-download">DOWNLOAD CLEAN AUDIO 📥</button></a>
-    </div>
-  </div>
+  <button class="submit-btn" id="generateBtn" onclick="generateCaptions()">⚡ Generate SRT Captions</button>
 
-  <script>
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
+  <div id="status">API Key daalo, file chuno aur generate dabao.</div>
+</div>
 
-    const recordBtn = document.getElementById('recordBtn');
-    const statusText = document.getElementById('statusText');
-    const outputSection = document.getElementById('outputSection');
-    const audioOutput = document.getElementById('audioOutput');
-    const downloadLink = document.getElementById('downloadLink');
+<script>
+  async function generateCaptions() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const fileInput = document.getElementById('fileInput');
+    const status = document.getElementById('status');
+    const btn = document.getElementById('generateBtn');
 
-    // Audio Buffer ko Filter karne ka function (Web Audio API)
-    async function applyNoiseFilter(arrayBuffer) {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    if (!apiKey) { alert("Pehle AssemblyAI API Key daalo!"); return; }
+    if (!fileInput.files.length) { alert("Pehle video/audio file select karo!"); return; }
 
-      const offlineCtx = new OfflineAudioContext(
-        decodedBuffer.numberOfChannels,
-        decodedBuffer.length,
-        decodedBuffer.sampleRate
-      );
+    const file = fileInput.files[0];
+    btn.disabled = true;
 
-      const source = offlineCtx.createBufferSource();
-      source.buffer = decodedBuffer;
+    try {
+      // Step 1: Upload File
+      status.innerText = "⏳ Step 1/3: File upload ho rahi hai...";
+      const uploadRes = await fetch("https://api.assemblyai.com/v2/upload", {
+        method: "POST",
+        headers: { "authorization": apiKey },
+        body: file
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadData.upload_url) throw new Error(uploadData.error || "Upload failed");
 
-      // 1. High-Pass Filter: Low frequencies (fan, rumble, hawa ki awaz) ko cut karega (< 120Hz)
-      const highPass = offlineCtx.createBiquadFilter();
-      highPass.type = 'highpass';
-      highPass.frequency.value = 120;
+      // Step 2: Request Transcription (Auto Language Detect)
+      status.innerText = "⏳ Step 2/3: Audio transcribe ho raha hai...";
+      const transcriptRes = await fetch("https://api.assemblyai.com/v2/transcript", {
+        method: "POST",
+        headers: {
+          "authorization": apiKey,
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          audio_url: uploadData.upload_url,
+          language_detection: true
+        })
+      });
+      const transcriptData = await transcriptRes.json();
+      const transcriptId = transcriptData.id;
 
-      // 2. Low-Pass Filter: High frequencies (hiss, static noise) ko cut karega (> 6500Hz)
-      const lowPass = offlineCtx.createBiquadFilter();
-      lowPass.type = 'lowpass';
-      lowPass.frequency.value = 6500;
+      // Step 3: Poll for Completion
+      let completed = false;
+      while (!completed) {
+        status.innerText = "⏳ Step 3/3: Captions processing chal rahi hai... (Wait 10-15s)";
+        await new Promise(r => setTimeout(r, 3000));
+        
+        const pollRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+          headers: { "authorization": apiKey }
+        });
+        const pollData = await pollRes.json();
 
-      // Connect nodes
-      source.connect(highPass);
-      highPass.connect(lowPass);
-      lowPass.connect(offlineCtx.destination);
+        if (pollData.status === "completed") {
+          completed = true;
+          
+          // Fetch SRT Subtitles
+          const srtRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}/srt`, {
+            headers: { "authorization": apiKey }
+          });
+          const srtText = await srtRes.text();
 
-      source.start(0);
-      const renderedBuffer = await offlineCtx.startRendering();
-      return bufferToWavBlob(renderedBuffer);
-    }
+          // Download SRT File
+          const blob = new Blob([srtText], { type: "text/plain" });
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = `${file.name.split('.')[0]}_captions.srt`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
 
-    // AudioBuffer ko WAV Blob me convert karna
-    function bufferToWavBlob(abuffer) {
-      const numOfChan = abuffer.numberOfChannels;
-      const length = abuffer.length * numOfChan * 2 + 44;
-      const buffer = new ArrayBuffer(length);
-      const view = new DataView(buffer);
-      const channels = [];
-      let sample, offset = 0, pos = 0;
-
-      function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
-      function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
-
-      setUint32(0x46464952); // "RIFF"
-      setUint32(length - 8);
-      setUint32(0x45564157); // "WAVE"
-      setUint32(0x20746d66); // "fmt " chunk
-      setUint32(16);
-      setUint16(1);          // PCM
-      setUint16(numOfChan);
-      setUint32(abuffer.sampleRate);
-      setUint32(abuffer.sampleRate * 2 * numOfChan);
-      setUint16(numOfChan * 2);
-      setUint16(16);
-      setUint32(0x61746164); // "data"
-      setUint32(length - pos - 4);
-
-      for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
-
-      while (pos < abuffer.length) {
-        for (let i = 0; i < numOfChan; i++) {
-          sample = Math.max(-1, Math.min(1, channels[i][pos]));
-          sample = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
-          view.setInt16(pos + 44, sample, true); // offset fix
-          offset += 2;
+          status.innerText = "✅ SRT Caption file download ho chuki hai!";
+        } else if (pollData.status === "error") {
+          throw new Error(pollData.error);
         }
-        pos++;
       }
-      return new Blob([view], { type: 'audio/wav' });
+    } catch (err) {
+      status.innerText = "❌ Error: " + err.message;
+    } finally {
+      btn.disabled = false;
     }
+  }
+</script>
 
-    async function processUploadedFile(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      statusText.textContent = "Filtering background noise...";
-      const arrayBuffer = await file.arrayBuffer();
-      
-      const cleanBlob = await applyNoiseFilter(arrayBuffer);
-      const audioUrl = URL.createObjectURL(cleanBlob);
-
-      audioOutput.src = audioUrl;
-      downloadLink.href = audioUrl;
-      downloadLink.download = "clean_voice.wav";
-
-      outputSection.style.display = "flex";
-      statusText.textContent = "Noise removed successfully!";
-    }
-
-    async function toggleRecording() {
-      if (!isRecording) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: { noiseSuppression: true, echoCancellation: true } });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-
-          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-
-          mediaRecorder.onstop = async () => {
-            statusText.textContent = "Processing recorded audio...";
-            const blob = new Blob(audioChunks, { type: 'audio/webm' });
-            const arrayBuffer = await blob.arrayBuffer();
-            
-            const cleanBlob = await applyNoiseFilter(arrayBuffer);
-            const audioUrl = URL.createObjectURL(cleanBlob);
-
-            audioOutput.src = audioUrl;
-            downloadLink.href = audioUrl;
-            downloadLink.download = "clean_recording.wav";
-
-            outputSection.style.display = "flex";
-            statusText.textContent = "Recording cleaned successfully!";
-          };
-
-          mediaRecorder.start();
-          isRecording = true;
-          recordBtn.textContent = "⏹️ Stop & Clean";
-          recordBtn.style.background = "#374151";
-          statusText.textContent = "Recording in progress...";
-          outputSection.style.display = "none";
-        } catch (err) {
-          alert("Mic permission denied.");
-          statusText.textContent = "Mic error.";
-        }
-      } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        recordBtn.textContent = "🔴 Live Record";
-        recordBtn.style.background = "";
-      }
-    }
-  </script>
 </body>
 </html>
-
